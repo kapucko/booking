@@ -73,7 +73,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--date', dest='date', required=True, action='store', type=convert_date,
                         help='Departure date YYYY-MM-DD')
     parser.add_argument('-f', '--from', dest='flight_from', required=True, action='store', help='Departure destination')
-    parser.add_argument('-t', '--to', dest='flight_to', required=True, action='store', help='Arival destination')
+    parser.add_argument('-t', '--to', dest='flight_to', required=True, action='store', help='Arrival destination')
     # one way or return ticket
     ticket_type_group = parser.add_mutually_exclusive_group()
     ticket_type_group.add_argument('-r', '--return', dest='flight_return', action='store', type=int,
