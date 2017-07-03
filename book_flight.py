@@ -8,6 +8,10 @@ SEARCH_URL = 'https://api.skypicker.com/flights'
 BOOKING_URL = 'http://37.139.6.125:8080/booking'
 
 
+class ApiException(Exception):
+    pass
+
+
 def convert_date(date_str):
     try:
         return datetime.datetime.strptime(date_str, '%Y-%m-%d')
@@ -31,10 +35,11 @@ def book_flight(token):
     response = requests.post(BOOKING_URL, json=data)
     if response.status_code == 200:
         return response.json()['pnr']
-    return None
+
+    raise ApiException('Unable to book flight. Reason: {0}'.format(response.reason))
 
 
-def main(flight_date, flight_from, flight_to, flight_one_way, flight_return, sort):
+def main(flight_date, flight_from, flight_to, flight_return, sort):
 
     date = flight_date.strftime('%d/%m/%Y')
     query_params = {
@@ -53,19 +58,14 @@ def main(flight_date, flight_from, flight_to, flight_one_way, flight_return, sor
 
     response = requests.get(SEARCH_URL, query_params)
     if response.status_code != 200:
-        print('Error when searching API, reason: {0}'.format(response.reason))
-        exit(1)
+        raise ApiException('Error when searching API, reason: {0}'.format(response.reason))
     data = response.json()
     if not data.get('_results'):
-        print('No results for your filter.')
-        return
+        raise ApiException('No results for your filter.')
 
     result = data.get('data')[0]
     pnr = book_flight(result['booking_token'])
-    if pnr:
-        print(pnr)
-    else:
-        print('Error when booking ticket.')
+    print(pnr)
 
 
 if __name__ == "__main__":
@@ -87,5 +87,8 @@ if __name__ == "__main__":
     flight_preference_group.add_argument('-s', '--shortest', dest='shortest', action='store_true',
                                          help='Book ticket with shortest duration')
     args = parser.parse_args()
-    main(args.date, args.flight_from, args.flight_to, args.flight_one_way, args.flight_return,
-         'duration' if args.shortest else 'price')
+    try:
+        main(args.date, args.flight_from, args.flight_to, args.flight_return, 'duration' if args.shortest else 'price')
+    except ApiException as e:
+        print(e)
+        exit(1)
